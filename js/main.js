@@ -6,7 +6,7 @@
 $(function() {
     // タイムスタンプコピー機能
     $(document).on('click', '#copyTs', function() {
-        const $lis = $('#fileList li');
+        const $lis = $('#fileList li:not(.header)');
         if ($lis.length === 0) {
             alert('コピーするタイムスタンプがありません');
             return;
@@ -81,6 +81,8 @@ $(function() {
         const $ul = $('#fileList');
         $ul.empty();
         const numberingMode = getNumberingMode();
+        // ヘッダー行を追加（内容はnumberingModeで切り替え、行自体は常に表示）
+        $ul.append(getHeaderHtml(numberingMode));
         try {
             const json = JSON.parse(content);
             const found = [];
@@ -129,17 +131,33 @@ $(function() {
         // 再描画のために直近のzipデータを再利用するには、processWesprojContentを再呼び出しする必要がある
         // ここでは一度表示されたリストを再描画する簡易対応
         const $ul = $('#fileList');
-        const items = $ul.children('li').toArray().map(li => {
+        // ヘッダー以外のliを取得
+        const items = $ul.children('li:not(.header)').toArray().map(li => {
             return {
-                filename: $(li).find('.name').text(),
+                filename: $(li).data('filename') || $(li).find('.name').text(),
                 tlBegin: $(li).find('.ts').text()
             };
         });
         $ul.empty();
+        // 新しいヘッダー行を追加（内容はnumberingModeで切り替え、行自体は常に表示）
+        const numberingMode = getNumberingMode();
+        $ul.append(getHeaderHtml(numberingMode));
+        
         items.forEach((item, idx) => {
-            $ul.append(renderListItem(item, idx, getNumberingMode()));
+            $ul.append(renderListItem(item, idx, numberingMode));
         });
     });
+
+    // ヘッダー行のHTMLを返す関数
+    function getHeaderHtml(numberingMode) {
+        if (numberingMode === 'head') {
+            return '<li class="header"><span class="num">No</span><span class="ts">開始時間</span><span class="name">ファイル名</span></li>';
+        } else if (numberingMode === 'beforeName') {
+            return '<li class="header"><span class="ts">開始時間</span><span class="num">No</span><span class="name">ファイル名</span></li>';
+        } else {
+            return '<li class="header"><span class="ts">開始時間</span><span class="name">ファイル名</span></li>';
+        }
+    }
 
     // パスからファイル名だけを抽出
     function extractFileName(path) {
