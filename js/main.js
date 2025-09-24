@@ -4,6 +4,12 @@
 
 
 $(function() {
+    // オプション表示/非表示切り替え（アニメーション）
+    $('#toggleOptions').on('click', function() {
+        $('.numbering-row, .ext-row').each(function() {
+            $(this).slideToggle(300);
+        });
+    });
     // タイムスタンプコピー機能
     $(document).on('click', '#copyTs', function() {
         const $lis = $('#fileList li:not(.header)');
