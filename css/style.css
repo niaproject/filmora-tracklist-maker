@@ -13,7 +13,7 @@ body {
     min-height: 100vh;
     position: relative;
 }
-ul { list-style: none; padding: 0; margin: 0; }
+
 ul { list-style: none; padding: 0; margin: 0; }
 li {
     display: flex; align-items: center; gap: 10px;
@@ -21,13 +21,18 @@ li {
     border: 1px solid #ccc; border-radius: 6px;
     cursor: grab; user-select: none;
 }
+li.data-row {
+    background: #dfd782;
+}
+.header {
+    background: #d5d7db;
+}
+
 .num  { min-width: 3ch; text-align: right; }
 .ts   { font-family: monospace; min-width: 9ch; cursor: pointer; text-decoration: underline dotted; }
 .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 li.summary { cursor: default; background: #f8fafc; border-style: dashed; }
-.header {
-    background: #e5e7eb;
-}
+
 .row { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
 .group {
     display: inline-flex; gap: 8px; align-items: center;

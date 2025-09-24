@@ -4,6 +4,8 @@
 
 
 $(function() {
+    // 初期状態でオプションを非表示
+    $('.numbering-row, .ext-row').hide();
     // オプション表示/非表示切り替え（アニメーション）
     $('#toggleOptions').on('click', function() {
         $('.numbering-row, .ext-row').each(function() {
@@ -108,7 +110,8 @@ $(function() {
 
     // sample.html風のliを生成
     function renderListItem(item, idx, numberingMode) {
-        const li = document.createElement('li');
+    const li = document.createElement('li');
+    li.classList.add('data-row');
         const numSpan  = document.createElement('span'); numSpan.className  = 'num';
         const tsSpan   = document.createElement('span'); tsSpan.className   = 'ts';
         const nameSpan = document.createElement('span'); nameSpan.className = 'name';

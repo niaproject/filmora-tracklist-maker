@@ -1,6 +1,9 @@
 # build output
 dist/
 
+# npm dependencies
+node_modules/
+
 
 # environment variables
 .env
