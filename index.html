@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+        <script src="js/main.js"></script>
+        <title>Document</title>
+        <link rel="stylesheet" href="css/style.css">   
+</head>
+<body>
+    <h2>wfp タイムスタンプジェネレータ</h2>
+    <!-- コンテンツをここに追加 -->
+    <div class="row">
+        <span class="group" role="group" aria-label="ファイルを選択">
+            <strong>ファイルを選択:</strong>
+            <input type="file" id="fileInput" name="fileInput">
+        </span>
+    </div>
+    <div class="row">
+        <span class="group" role="group" aria-label="連番付与">
+            <strong>連番付与</strong>
+            <label><input type="radio" name="numbering" value="none" checked> 無し</label>
+            <label><input type="radio" name="numbering" value="head"> 先頭につける</label>
+            <label><input type="radio" name="numbering" value="beforeName"> 曲名の前につける</label>
+        </span>
+    </div>
+    <div class="row">
+        <span class="group" role="group" aria-label="拡張子">
+            <strong>拡張子</strong>
+            <label><input type="radio" name="extOption" value="withExt" checked> 残す</label>
+            <label><input type="radio" name="extOption" value="none" > 無し</label>
+        </span>
+    </div>
+    <div class="row">
+        <span class="group" role="group" aria-label="タイムスタンプコピー">
+            <strong>タイムスタンプをコピー:</strong>
+            <button id="copyTs">タイムスタンプをコピー</button>
+        </span>
+    </div>
+    <ul id="fileList"></ul>
+    
+</body>
+</html>

@@ -1,0 +1,17 @@
+body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+ul { list-style: none; padding: 0; margin: 0; }
+li {
+    display: flex; align-items: center; gap: 10px;
+    margin: 4px 0; padding: 6px 8px;
+    border: 1px solid #ccc; border-radius: 6px;
+    cursor: grab; user-select: none;
+}
+.num  { min-width: 2ch; text-align: right; }
+.ts   { font-family: monospace; min-width: 7ch; cursor: pointer; text-decoration: underline dotted; }
+.name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+li.summary { cursor: default; background: #f8fafc; border-style: dashed; }
+.row { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+.group {
+    display: inline-flex; gap: 8px; align-items: center;
+    padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 8px;
+}
