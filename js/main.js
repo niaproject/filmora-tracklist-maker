@@ -1,8 +1,4 @@
 // main.js
-// ファイル選択inputからzipファイルを読み込み、中身のファイル名を表示するサンプル
-// 事前に index.html で JSZip をCDNから読み込む必要があります
-
-
 $(function() {
     // 初期状態でオプションを非表示
     $('.numbering-row, .ext-row').hide();
@@ -108,7 +104,7 @@ $(function() {
         }
     }
 
-    // sample.html風のliを生成
+    // liを生成
     function renderListItem(item, idx, numberingMode) {
     const li = document.createElement('li');
     li.classList.add('data-row');
