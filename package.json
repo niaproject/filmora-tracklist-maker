@@ -1,5 +1,9 @@
 {
   "devDependencies": {
-    "javascript-obfuscator": "^4.1.1"
+    "javascript-obfuscator": "^4.1.1",
+    "terser": "^5.44.0"
+  },
+  "scripts": {
+    "minify": "terser js/main.js --compress --mangle --output js/main.min.js"
   }
 }
