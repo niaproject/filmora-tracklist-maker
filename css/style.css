@@ -9,7 +9,7 @@
 /* .hidden クラスは不要になったため削除 */
 body {
     font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-    background: #cdf1d9;
+    background: #e1eeb4;
     min-height: 100vh;
     position: relative;
 }
@@ -22,7 +22,7 @@ li {
     cursor: grab; user-select: none;
 }
 li.data-row {
-    background: #dfba82;
+    background: #c7dd77;
 }
 .header {
     background: #d5d7db;
