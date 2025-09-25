@@ -26,14 +26,16 @@ $ npm install terser --save-dev
 
 ```json
 "scripts": {
-  "minify": "terser js/main.js --compress --mangle --output js/main.min.js"
+  "minify": "terser js/main.js --compress --mangle --output js/main.min.js",
+  "postminify": "npx replace-in-file 'js/main.js' 'js/main.min.js' index.html",
+  "build": "npm run preminify && npm run minify && npm run postminify"
 }
 ```
 
 ### ツールの実行
 
 ```
-$ npm run minify
+$ npm run build
 ```
 
 
