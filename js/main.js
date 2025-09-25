@@ -39,12 +39,13 @@ $(function() {
         const $ul = $('#fileList');
         $ul.children('li').each(function() {
             const $li = $(this);
-            const original = $li.data('filename') || $li.find('.name').text();
-            let name = original;
-            // ファイル名だけにする
+            // 必ず元のファイル名（data属性）から表示名を生成
+            let name = $li.data('filename');
+            if (!name) return;
             name = name.split(/[/\\]/).pop();
             if (extOption === 'none') {
-                name = name.replace(/\.[^/.]+$/, '');
+                // 最後が.mp3または.wavの場合のみ拡張子を除去
+                name = name.replace(/(\.mp3|\.wav)$/i, '');
             }
             $li.find('.name').text(name);
         });
@@ -133,21 +134,23 @@ $(function() {
 
     // 連番ラジオボタン変更時にリスト再描画
     $(document).on('change', 'input[name="numbering"]', function() {
-        // 再描画のために直近のzipデータを再利用するには、processWesprojContentを再呼び出しする必要がある
-        // ここでは一度表示されたリストを再描画する簡易対応
         const $ul = $('#fileList');
+        const extOption = $('input[name="extOption"]:checked').val();
         // ヘッダー以外のliを取得
         const items = $ul.children('li:not(.header)').toArray().map(li => {
+            let filename = $(li).data('filename') || $(li).find('.name').text();
+            // 拡張子オプションが「無し」の場合は.mp3または.wavのみ除去
+            if (extOption === 'none' && typeof filename === 'string') {
+                filename = filename.replace(/(\.mp3|\.wav)$/i, '');
+            }
             return {
-                filename: $(li).data('filename') || $(li).find('.name').text(),
+                filename: filename,
                 tlBegin: $(li).find('.ts').text()
             };
         });
         $ul.empty();
-        // 新しいヘッダー行を追加（内容はnumberingModeで切り替え、行自体は常に表示）
         const numberingMode = getNumberingMode();
         $ul.append(getHeaderHtml(numberingMode));
-        
         items.forEach((item, idx) => {
             $ul.append(renderListItem(item, idx, numberingMode));
         });
