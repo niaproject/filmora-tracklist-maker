@@ -1,5 +1,12 @@
 // main.js
 $(function() {
+    // SE除去機能のリスト更新ボタンでリストを更新
+    $(document).on('click', '#seRemoveUpdateBtn', function() {
+        const $ul = $('#fileList');
+        if (window._lastTrackListData) {
+            renderTrackList($ul, window._lastTrackListData);
+        }
+    });
     // リピート表記有効/無効の切り替え時にリスト再描画
     $(document).on('change', 'input[name="repeatNotation"]', function() {
         const $ul = $('#fileList');
@@ -9,10 +16,10 @@ $(function() {
     });
 
     // 初期状態でオプションを非表示
-    $('.numbering-row, .ext-row, .repeat-row').hide();
+    $('.numbering-row, .ext-row, .repeat-row, .se-remove-row').hide();
     // オプション表示/非表示切り替え（アニメーション）
     $('#toggleOptions').on('click', function() {
-        $('.numbering-row, .ext-row, .repeat-row').each(function() {
+        $('.numbering-row, .ext-row, .repeat-row, .se-remove-row').each(function() {
             $(this).slideToggle(300);
         });
     });
@@ -174,6 +181,7 @@ $(function() {
         const numberingMode = getNumberingMode();
         const repeatNotation = $('input[name="repeatNotation"]:checked').val();
         const extOption = $('input[name="extOption"]:checked').val();
+    const seRemoveSecound = Number($('#seRemoveSecound').val()) || 0;
         $ul.empty();
         $ul.append(getHeaderHtml(numberingMode));
         let baseList = trackListData.map(item => {
@@ -183,8 +191,26 @@ $(function() {
             }
             return { ...item, filename };
         });
+        // SE除去機能: 指定秒数以下のトラックを除去（ボタンでのみ動作）
+        if (seRemoveSecound > 0) {
+            baseList = baseList.filter(item => {
+                // tlBeginは開始時刻、次の曲のtlBeginとの差分で長さを計算
+                // 最後の曲は除外しない（または0秒扱い）
+                const idx = baseList.indexOf(item);
+                let duration = 0;
+                if (idx < baseList.length - 1) {
+                    const curr = Number(item.tlBegin);
+                    const next = Number(baseList[idx + 1].tlBegin);
+                    duration = (next - curr) / 1e7;
+                } else {
+                    duration = 9999; // 最後は除外しない
+                }
+                return duration > seRemoveSecound;
+            });
+        }
         let grouped = getRepeatGrouped(baseList, repeatNotation);
         let idx = 0;
+        // 連番は除外後のリストで振り直す
         grouped.forEach(item => {
             $ul.append(renderListItem(item, idx, numberingMode, repeatNotation));
             idx += item.repeatCount;

@@ -1,8 +1,8 @@
 .group > strong {
     display: inline-block;
-    width: 90px;
-    min-width: 90px;
-    max-width: 90px;
+    width: 140px;
+    min-width: 140px;
+    max-width: 140px;
     text-align: right;
     margin-right: 8px;
 }

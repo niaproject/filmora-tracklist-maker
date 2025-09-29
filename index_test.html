@@ -40,9 +40,16 @@
     </div>
     <div class="row repeat-row">
         <span class="group" role="group" aria-label="リピート表記機能">
-            <strong>リピート表記機能(ハリたっくさん用)</strong>
+            <strong>リピート表記機能<br />(ハリたっくさん用)</strong>
             <label><input type="radio" name="repeatNotation" value="withRepeatNotation"> 有効</label>
             <label><input type="radio" name="repeatNotation" value="none" checked> 無効</label>
+        </span>
+    </div>
+    <div class="row se-remove-row">
+        <span class="group" role="group" aria-label="SE除去機能">
+            <strong>SE除去機能<br />(ゆきおさん用)</strong>
+            <input type="number" id="seRemoveSecound" name="seRemoveSecound" min="0" max="60" value="0" style="width:60px;margin-left:10px;"> <span style="font-size:90%">秒以下を除去</span>
+            <button id="seRemoveUpdateBtn" type="button" style="margin-left:10px;">リスト更新</button>
         </span>
     </div>
     <div class="row">
@@ -53,8 +60,7 @@
     <footer>
         filmora-tracklist-maker &copy; 2025 にあぷろじぇくと (niaproject)
         <img src="images/icon_128.png" alt="icon" width="32" height="32" style="vertical-align:middle;"><br />
-        ver.20250926_074732
-        
+        ver.20250929_200945
     </footer>
 </body>
 </html>
