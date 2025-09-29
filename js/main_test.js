@@ -209,11 +209,9 @@ $(function() {
             });
         }
         let grouped = getRepeatGrouped(baseList, repeatNotation);
-        let idx = 0;
-        // 連番は除外後のリストで振り直す
-        grouped.forEach(item => {
-            $ul.append(renderListItem(item, idx, numberingMode, repeatNotation));
-            idx += item.repeatCount;
+        // 連番はまとめた行ごとに振り直す
+        grouped.forEach((item, i) => {
+            $ul.append(renderListItem(item, i, numberingMode, repeatNotation));
         });
     }
 
