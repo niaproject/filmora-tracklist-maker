@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+        <script src="js/main_test.js"></script>
+        <title>Filmora TRACKLIST MAKER</title>
+        <link rel="stylesheet" href="css/style.css">   
+</head>
+<body>
+    <h2 style="display:flex;align-items:center;gap:10px;">
+        <img src="images/logo.png" alt="logo" width="256" style="vertical-align:middle;">
+    </h2>
+    <!-- コンテンツをここに追加 -->
+    <div class="row">
+        <span class="group-files" role="group" aria-label="ファイルを選択">
+            <strong>ファイルを選択(.wfp):</strong>
+            <input type="file" id="fileInput" name="fileInput" accept=".wfp">
+        </span>
+    </div>
+    <div class="row">
+        <button id="toggleOptions" type="button">オプションの表示/非表示</button>
+    </div>
+    <div class="row numbering-row">
+        <span class="group" role="group" aria-label="連番付与">
+            <strong>連番付与</strong>
+            <label><input type="radio" name="numbering" value="none" checked> 無し</label>
+            <label><input type="radio" name="numbering" value="head"> 先頭</label>
+            <label><input type="radio" name="numbering" value="beforeName"> 曲名前</label>
+        </span>
+    </div>
+    <div class="row ext-row">
+        <span class="group" role="group" aria-label="拡張子">
+            <strong>拡張子</strong>
+            <label><input type="radio" name="extOption" value="withExt" checked> 残す</label>
+            <label><input type="radio" name="extOption" value="none" > 無し</label>
+        </span>
+    </div>
+    <div class="row repeat-row">
+        <span class="group" role="group" aria-label="リピート表記機能">
+            <strong>リピート表記機能(ハリたっくさん用)</strong>
+            <label><input type="radio" name="repeatNotation" value="withRepeatNotation"> 有効</label>
+            <label><input type="radio" name="repeatNotation" value="none" checked> 無効</label>
+        </span>
+    </div>
+    <div class="row">
+        <button id="copyTs">トラックリストをコピー</button>
+    </div>
+    <ul id="fileList"></ul>
+    
+    <footer>
+        filmora-tracklist-maker &copy; 2025 にあぷろじぇくと (niaproject)
+        <img src="images/icon_128.png" alt="icon" width="32" height="32" style="vertical-align:middle;"><br />
+        ver.20250926_074732
+        
+    </footer>
+</body>
+</html>
