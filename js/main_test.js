@@ -194,18 +194,12 @@ $(function() {
         // SE除去機能: 指定秒数以下のトラックを除去（ボタンでのみ動作）
         if (seRemoveSecound > 0) {
             baseList = baseList.filter(item => {
-                // tlBeginは開始時刻、次の曲のtlBeginとの差分で長さを計算
-                // 最後の曲は除外しない（または0秒扱い）
-                const idx = baseList.indexOf(item);
-                let duration = 0;
-                if (idx < baseList.length - 1) {
-                    const curr = Number(item.tlBegin);
-                    const next = Number(baseList[idx + 1].tlBegin);
-                    duration = (next - curr) / 1e7;
-                } else {
-                    duration = 9999; // 最後は除外しない
+                // duration（100ナノ秒単位）を秒に変換して判定
+                let durationSec = 9999;
+                if (typeof item.duration === 'number' && !isNaN(item.duration)) {
+                    durationSec = item.duration / 1e7;
                 }
-                return duration > seRemoveSecound;
+                return durationSec > seRemoveSecound;
             });
         }
         let grouped = getRepeatGrouped(baseList, repeatNotation);
@@ -265,9 +259,14 @@ $(function() {
             if (typeof obj.filename === 'string' &&
                 (obj.filename.toLowerCase().endsWith('.mp3') || obj.filename.toLowerCase().endsWith('.wav'))
             ) {
+                let duration = null;
+                if ('tlEnd' in obj && typeof obj.tlEnd !== 'undefined') {
+                    duration = Number(obj.tlEnd) - Number(obj.tlBegin);
+                }
                 result.push({
                     filename: obj.filename,
-                    tlBegin: obj.tlBegin
+                    tlBegin: obj.tlBegin,
+                    duration: duration
                 });
             }
         }
