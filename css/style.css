@@ -34,8 +34,13 @@ li.summary { cursor: default; background: #f8fafc; border-style: dashed; }
 
 .row { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
 .group {
-    display: inline-flex; gap: 8px; align-items: center;
-    padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 8px;
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    padding: 6px 8px;
+    border: 1px solid #b5c16c;
+    border-radius: 8px;
+    /*background: #f6fbe7;*/
 }
 footer {
     margin-top: 2em; text-align: center; color: #888; font-size: 0.95em;

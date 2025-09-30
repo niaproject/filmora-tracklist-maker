@@ -7,8 +7,10 @@ $(function() {
             renderTrackList($ul, window._lastTrackListData);
         }
     });
-    // リピート表記有効/無効の切り替え時にリスト再描画
-    $(document).on('change', 'input[name="repeatNotation"]', function() {
+    // チェックボックス対応
+    $(document).on('change', '#repeatNotationCheckbox', function() {
+        const repeatNotation = this.checked ? 'withRepeatNotation' : 'none';
+        window._repeatNotation = repeatNotation;
         const $ul = $('#fileList');
         if (window._lastTrackListData) {
             renderTrackList($ul, window._lastTrackListData);
@@ -91,7 +93,7 @@ $(function() {
         const $ul = $('#fileList');
         $ul.empty();
         const numberingMode = getNumberingMode();
-        const repeatNotation = $('input[name="repeatNotation"]:checked').val();
+    const repeatNotation = window._repeatNotation || 'none';
         $ul.append(getHeaderHtml(numberingMode));
         try {
             const json = JSON.parse(content);
@@ -119,21 +121,68 @@ $(function() {
     // 連続する同じ曲をまとめてリピート回数を付与する関数
     function getRepeatGrouped(list, repeatNotation) {
         if (repeatNotation === 'withRepeatNotation') {
-            let grouped = [];
-            let i = 0;
-            while (i < list.length) {
-                let count = 1;
-                let j = i + 1;
-                while (j < list.length && list[i].filename === list[j].filename) {
-                    count++;
-                    j++;
+            // 曲名配列
+            const arr = list.map(item => item.filename);
+            // 最長で繰り返しているサブシーケンスを検出
+            let maxSeq = [];
+            let maxCount = 1;
+            for (let len = 1; len <= arr.length / 2; len++) {
+                for (let i = 0; i <= arr.length - len; i++) {
+                    const seq = arr.slice(i, i + len).join(',');
+                    let count = 0;
+                    for (let j = 0; j <= arr.length - len; j++) {
+                        if (arr.slice(j, j + len).join(',') === seq) {
+                            count++;
+                        }
+                    }
+                    if (count > 1 && len > maxSeq.length) {
+                        maxSeq = arr.slice(i, i + len);
+                        maxCount = count;
+                    }
                 }
-                grouped.push({ ...list[i], repeatCount: count });
-                i = j;
             }
-            return grouped;
+            // サブシーケンスが見つかった場合、その2回目以降はRepeat
+            if (maxSeq.length > 0) {
+                const seqStr = maxSeq.join(',');
+                let seqIdx = 0;
+                let repeatSet = [];
+                for (let i = 0; i < arr.length;) {
+                    if (arr.slice(i, i + maxSeq.length).join(',') === seqStr) {
+                        seqIdx++;
+                        for (let k = 0; k < maxSeq.length; k++) {
+                            repeatSet.push(seqIdx === 1 ? false : true);
+                        }
+                        i += maxSeq.length;
+                    } else {
+                        repeatSet.push(false);
+                        i++;
+                    }
+                }
+                // Repeatセットの1行目だけ表示、2行目以降は非表示
+                let isVisibleArr = [];
+                let i = 0;
+                while (i < repeatSet.length) {
+                    if (repeatSet[i]) {
+                        // Repeatセットの先頭だけ表示
+                        isVisibleArr[i] = true;
+                        // 以降の同じセットは非表示
+                        let j = i + 1;
+                        while (j < repeatSet.length && repeatSet[j]) {
+                            isVisibleArr[j] = false;
+                            j++;
+                        }
+                        i = j;
+                    } else {
+                        isVisibleArr[i] = true;
+                        i++;
+                    }
+                }
+                return list.map((item, idx) => ({ ...item, isRepeat: repeatSet[idx], isVisible: isVisibleArr[idx] }));
+            } else {
+                return list.map(item => ({ ...item, isRepeat: false }));
+            }
         } else {
-            return list.map(item => ({ ...item, repeatCount: 1 }));
+            return list.map(item => ({ ...item, isRepeat: false }));
         }
     }
 
@@ -148,8 +197,8 @@ $(function() {
         // リピート表記機能
         tsSpan.textContent = formatNanoToTime(item.tlBegin);
         let displayName = extractFileName(item.filename);
-        if (repeatNotation === 'withRepeatNotation' && item.repeatCount && item.repeatCount > 1) {
-            displayName += ` x${item.repeatCount}`;
+        if (repeatNotation === 'withRepeatNotation' && item.isRepeat) {
+            displayName = 'Repeat';
         }
         nameSpan.textContent = displayName;
         // 元のファイル名をdata属性に保持
@@ -179,7 +228,7 @@ $(function() {
     // 汎用リスト描画関数
     function renderTrackList($ul, trackListData) {
         const numberingMode = getNumberingMode();
-        const repeatNotation = $('input[name="repeatNotation"]:checked').val();
+    const repeatNotation = window._repeatNotation || 'none';
         const extOption = $('input[name="extOption"]:checked').val();
     const seRemoveSecound = Number($('#seRemoveSecound').val()) || 0;
         $ul.empty();
@@ -203,9 +252,12 @@ $(function() {
             });
         }
         let grouped = getRepeatGrouped(baseList, repeatNotation);
-        // 連番はまとめた行ごとに振り直す
-        grouped.forEach((item, i) => {
-            $ul.append(renderListItem(item, i, numberingMode, repeatNotation));
+        let visibleIdx = 0;
+        grouped.forEach((item) => {
+            if (item.isVisible !== false) {
+                $ul.append(renderListItem(item, visibleIdx, numberingMode, repeatNotation));
+                visibleIdx++;
+            }
         });
     }
 
