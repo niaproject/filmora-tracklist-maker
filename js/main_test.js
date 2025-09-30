@@ -16,6 +16,13 @@ $(function() {
             renderTrackList($ul, window._lastTrackListData);
         }
     });
+    // Repeat閾値変更時もリスト再描画
+    $(document).on('input', '#repeatThreshold', function() {
+        const $ul = $('#fileList');
+        if (window._lastTrackListData) {
+            renderTrackList($ul, window._lastTrackListData);
+        }
+    });
 
     // 初期状態でオプションを非表示
     $('.numbering-row, .ext-row, .repeat-row, .se-remove-row').hide();
@@ -121,68 +128,22 @@ $(function() {
     // 連続する同じ曲をまとめてリピート回数を付与する関数
     function getRepeatGrouped(list, repeatNotation) {
         if (repeatNotation === 'withRepeatNotation') {
-            // 曲名配列
-            const arr = list.map(item => item.filename);
-            // 最長で繰り返しているサブシーケンスを検出
-            let maxSeq = [];
-            let maxCount = 1;
-            for (let len = 1; len <= arr.length / 2; len++) {
-                for (let i = 0; i <= arr.length - len; i++) {
-                    const seq = arr.slice(i, i + len).join(',');
-                    let count = 0;
-                    for (let j = 0; j <= arr.length - len; j++) {
-                        if (arr.slice(j, j + len).join(',') === seq) {
-                            count++;
-                        }
-                    }
-                    if (count > 1 && len > maxSeq.length) {
-                        maxSeq = arr.slice(i, i + len);
-                        maxCount = count;
-                    }
-                }
-            }
-            // サブシーケンスが見つかった場合、その2回目以降はRepeat
-            if (maxSeq.length > 0) {
-                const seqStr = maxSeq.join(',');
-                let seqIdx = 0;
-                let repeatSet = [];
-                for (let i = 0; i < arr.length;) {
-                    if (arr.slice(i, i + maxSeq.length).join(',') === seqStr) {
-                        seqIdx++;
-                        for (let k = 0; k < maxSeq.length; k++) {
-                            repeatSet.push(seqIdx === 1 ? false : true);
-                        }
-                        i += maxSeq.length;
+            const threshold = Number($('#repeatThreshold').val()) || 10;
+            let repeatShown = false;
+            return list.map((item, idx) => {
+                if ((idx + 1) < threshold) {
+                    return { ...item, isRepeat: false, isVisible: true };
+                } else {
+                    if (!repeatShown) {
+                        repeatShown = true;
+                        return { ...item, isRepeat: true, isVisible: true };
                     } else {
-                        repeatSet.push(false);
-                        i++;
+                        return { ...item, isRepeat: true, isVisible: false };
                     }
                 }
-                // Repeatセットの1行目だけ表示、2行目以降は非表示
-                let isVisibleArr = [];
-                let i = 0;
-                while (i < repeatSet.length) {
-                    if (repeatSet[i]) {
-                        // Repeatセットの先頭だけ表示
-                        isVisibleArr[i] = true;
-                        // 以降の同じセットは非表示
-                        let j = i + 1;
-                        while (j < repeatSet.length && repeatSet[j]) {
-                            isVisibleArr[j] = false;
-                            j++;
-                        }
-                        i = j;
-                    } else {
-                        isVisibleArr[i] = true;
-                        i++;
-                    }
-                }
-                return list.map((item, idx) => ({ ...item, isRepeat: repeatSet[idx], isVisible: isVisibleArr[idx] }));
-            } else {
-                return list.map(item => ({ ...item, isRepeat: false }));
-            }
+            });
         } else {
-            return list.map(item => ({ ...item, isRepeat: false }));
+            return list.map(item => ({ ...item, isRepeat: false, isVisible: true }));
         }
     }
 
@@ -228,9 +189,9 @@ $(function() {
     // 汎用リスト描画関数
     function renderTrackList($ul, trackListData) {
         const numberingMode = getNumberingMode();
-    const repeatNotation = window._repeatNotation || 'none';
+        const repeatNotation = window._repeatNotation || 'none';
         const extOption = $('input[name="extOption"]:checked').val();
-    const seRemoveSecound = Number($('#seRemoveSecound').val()) || 0;
+        const seRemoveSecound = Number($('#seRemoveSecound').val()) || 0;
         $ul.empty();
         $ul.append(getHeaderHtml(numberingMode));
         let baseList = trackListData.map(item => {
