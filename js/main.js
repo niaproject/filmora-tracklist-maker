@@ -100,7 +100,7 @@ $(function() {
         const $ul = $('#fileList');
         $ul.empty();
         const numberingMode = getNumberingMode();
-    const repeatNotation = window._repeatNotation || 'none';
+        const repeatNotation = window._repeatNotation || 'none';
         $ul.append(getHeaderHtml(numberingMode));
         try {
             const json = JSON.parse(content);
@@ -108,6 +108,13 @@ $(function() {
             extractKeys(json, found);
             if (found.length > 0) {
                 sortByTlBegin(found);
+                // 拡張子除去をここで必ず実行
+                const extOption = $('input[name="extOption"]:checked').val();
+                found.forEach(item => {
+                    if (extOption === 'none') {
+                        item.filename = item.filename.replace(/(\.mp3|\.wav)$/i, '');
+                    }
+                });
                 // 元データをグローバルに保存
                 window._lastTrackListData = found;
                 // リピート表記機能: 連続する同じ曲をまとめる
@@ -195,7 +202,7 @@ $(function() {
         $ul.empty();
         $ul.append(getHeaderHtml(numberingMode));
         let baseList = trackListData.map(item => {
-            let filename = item.filename.split(/[/\\]/).pop();
+            let filename = (item.originalFilename || item.filename).split(/[/\\]/).pop();
             if (extOption === 'none') {
                 filename = filename.replace(/(\.mp3|\.wav)$/i, '');
             }
@@ -278,6 +285,7 @@ $(function() {
                 }
                 result.push({
                     filename: obj.filename,
+                    originalFilename: obj.filename,
                     tlBegin: obj.tlBegin,
                     duration: duration
                 });

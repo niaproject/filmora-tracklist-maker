@@ -5,7 +5,7 @@
   },
   "scripts": {
     "minify": "terser js/main.js --compress --mangle --output js/main.min.js",
-    "postminify": "npx replace-in-file 'js/main.js' 'js/main.min.js' index.html",
+    "postminify": "npx replace-in-file 'main.js' 'main.min.js' index.html",
     "build": "npm run minify && npm run postminify"
   }
 }
