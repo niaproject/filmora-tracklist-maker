@@ -3,16 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="js/main_test.js"></script>
-    <title>Filmora TRACKLIST MAKER</title>
-    <link rel="stylesheet" href="css/style.css">
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+        <script src="js/main.min.js"></script>
+        <title>Filmora TRACKLIST MAKER</title>
+        <link rel="stylesheet" href="css/style.css">   
 </head>
 <body>
     <h2 style="display:flex;align-items:center;gap:10px;">
         <img src="images/logo.png" alt="logo" width="256" style="vertical-align:middle;">
-        β版
     </h2>
     <!-- コンテンツをここに追加 -->
     <div class="row">
@@ -39,20 +38,6 @@
             <label><input type="radio" name="extOption" value="none" > 無し</label>
         </span>
     </div>
-    <div class="row repeat-row">
-        <span class="group" role="group" aria-label="リピート表記機能">
-            <strong>リピート表記機能<br />(ハリたっくさん用)</strong>
-            <label><input type="checkbox" id="repeatNotationCheckbox"> 有効</label>
-            <input type="number" id="repeatThreshold" min="1" value="10" style="width:60px;margin-left:10px;"> <span style="font-size:90%">行目以降をRepeat表記 </span>
-        </span>
-    </div>
-    <div class="row se-remove-row">
-        <span class="group" role="group" aria-label="SE除去機能">
-            <strong>SE除去機能<br />(ゆきおさん用)</strong>
-            <input type="number" id="seRemoveSecound" name="seRemoveSecound" min="0" max="60" value="0" style="width:60px;margin-left:10px;"> <span style="font-size:90%">秒以下の曲を除去</span>
-            <button id="seRemoveUpdateBtn" type="button" style="margin-left:10px;">リスト更新</button>
-        </span>
-    </div>
     <div class="row">
         <button id="copyTs">トラックリストをコピー</button>
     </div>
@@ -61,7 +46,8 @@
     <footer>
         filmora-tracklist-maker &copy; 2025 にあぷろじぇくと (niaproject)
         <img src="images/icon_128.png" alt="icon" width="32" height="32" style="vertical-align:middle;"><br />
-        ver.20250930_211856 beta
+        ver.20250926_074732
+        
     </footer>
 </body>
 </html>

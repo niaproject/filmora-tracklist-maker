@@ -1,34 +1,10 @@
 // main.js
 $(function() {
-    // SE除去機能のリスト更新ボタンでリストを更新
-    $(document).on('click', '#seRemoveUpdateBtn', function() {
-        const $ul = $('#fileList');
-        if (window._lastTrackListData) {
-            renderTrackList($ul, window._lastTrackListData);
-        }
-    });
-    // チェックボックス対応
-    $(document).on('change', '#repeatNotationCheckbox', function() {
-        const repeatNotation = this.checked ? 'withRepeatNotation' : 'none';
-        window._repeatNotation = repeatNotation;
-        const $ul = $('#fileList');
-        if (window._lastTrackListData) {
-            renderTrackList($ul, window._lastTrackListData);
-        }
-    });
-    // Repeat閾値変更時もリスト再描画
-    $(document).on('input', '#repeatThreshold', function() {
-        const $ul = $('#fileList');
-        if (window._lastTrackListData) {
-            renderTrackList($ul, window._lastTrackListData);
-        }
-    });
-
     // 初期状態でオプションを非表示
-    $('.numbering-row, .ext-row, .repeat-row, .se-remove-row').hide();
+    $('.numbering-row, .ext-row').hide();
     // オプション表示/非表示切り替え（アニメーション）
     $('#toggleOptions').on('click', function() {
-        $('.numbering-row, .ext-row, .repeat-row, .se-remove-row').each(function() {
+        $('.numbering-row, .ext-row').each(function() {
             $(this).slideToggle(300);
         });
     });
@@ -59,10 +35,20 @@ $(function() {
 
     // 拡張子付与ラジオボタン変更時にリスト再描画
     $(document).on('change', 'input[name="extOption"]', function() {
+        const extOption = $('input[name="extOption"]:checked').val();
         const $ul = $('#fileList');
-        if (window._lastTrackListData) {
-            renderTrackList($ul, window._lastTrackListData);
-        }
+        $ul.children('li').each(function() {
+            const $li = $(this);
+            // 必ず元のファイル名（data属性）から表示名を生成
+            let name = $li.data('filename');
+            if (!name) return;
+            name = name.split(/[/\\]/).pop();
+            if (extOption === 'none') {
+                // 最後が.mp3または.wavの場合のみ拡張子を除去
+                name = name.replace(/(\.mp3|\.wav)$/i, '');
+            }
+            $li.find('.name').text(name);
+        });
     });
 
     const $fileInput = $('#fileInput');
@@ -100,7 +86,7 @@ $(function() {
         const $ul = $('#fileList');
         $ul.empty();
         const numberingMode = getNumberingMode();
-    const repeatNotation = window._repeatNotation || 'none';
+        // ヘッダー行を追加（内容はnumberingModeで切り替え、行自体は常に表示）
         $ul.append(getHeaderHtml(numberingMode));
         try {
             const json = JSON.parse(content);
@@ -108,14 +94,8 @@ $(function() {
             extractKeys(json, found);
             if (found.length > 0) {
                 sortByTlBegin(found);
-                // 元データをグローバルに保存
-                window._lastTrackListData = found;
-                // リピート表記機能: 連続する同じ曲をまとめる
-                let grouped = getRepeatGrouped(found, repeatNotation);
-                let idx = 0;
-                grouped.forEach(item => {
-                    $ul.append(renderListItem(item, idx, numberingMode, repeatNotation));
-                    idx += item.repeatCount;
+                found.forEach((item, idx) => {
+                    $ul.append(renderListItem(item, idx, numberingMode));
                 });
             } else {
                 $ul.append('<li>filenameとtlBeginが見つかりませんでした。</li>');
@@ -125,43 +105,16 @@ $(function() {
         }
     }
 
-    // 連続する同じ曲をまとめてリピート回数を付与する関数
-    function getRepeatGrouped(list, repeatNotation) {
-        if (repeatNotation === 'withRepeatNotation') {
-            const threshold = Number($('#repeatThreshold').val()) || 10;
-            let repeatShown = false;
-            return list.map((item, idx) => {
-                if ((idx + 1) < threshold) {
-                    return { ...item, isRepeat: false, isVisible: true };
-                } else {
-                    if (!repeatShown) {
-                        repeatShown = true;
-                        return { ...item, isRepeat: true, isVisible: true };
-                    } else {
-                        return { ...item, isRepeat: true, isVisible: false };
-                    }
-                }
-            });
-        } else {
-            return list.map(item => ({ ...item, isRepeat: false, isVisible: true }));
-        }
-    }
-
     // liを生成
-    function renderListItem(item, idx, numberingMode, repeatNotation) {
-        const li = document.createElement('li');
-        li.classList.add('data-row');
+    function renderListItem(item, idx, numberingMode) {
+    const li = document.createElement('li');
+    li.classList.add('data-row');
         const numSpan  = document.createElement('span'); numSpan.className  = 'num';
         const tsSpan   = document.createElement('span'); tsSpan.className   = 'ts';
         const nameSpan = document.createElement('span'); nameSpan.className = 'name';
         numSpan.textContent = idx + 1;
-        // リピート表記機能
         tsSpan.textContent = formatNanoToTime(item.tlBegin);
-        let displayName = extractFileName(item.filename);
-        if (repeatNotation === 'withRepeatNotation' && item.isRepeat) {
-            displayName = 'Repeat';
-        }
-        nameSpan.textContent = displayName;
+        nameSpan.textContent = extractFileName(item.filename);
         // 元のファイル名をdata属性に保持
         li.dataset.filename = item.filename;
         if (numberingMode === 'head') {
@@ -182,45 +135,26 @@ $(function() {
     // 連番ラジオボタン変更時にリスト再描画
     $(document).on('change', 'input[name="numbering"]', function() {
         const $ul = $('#fileList');
-        if (window._lastTrackListData) {
-            renderTrackList($ul, window._lastTrackListData);
-        }
-    });
-    // 汎用リスト描画関数
-    function renderTrackList($ul, trackListData) {
-        const numberingMode = getNumberingMode();
-        const repeatNotation = window._repeatNotation || 'none';
         const extOption = $('input[name="extOption"]:checked').val();
-        const seRemoveSecound = Number($('#seRemoveSecound').val()) || 0;
-        $ul.empty();
-        $ul.append(getHeaderHtml(numberingMode));
-        let baseList = trackListData.map(item => {
-            let filename = item.filename.split(/[/\\]/).pop();
-            if (extOption === 'none') {
+        // ヘッダー以外のliを取得
+        const items = $ul.children('li:not(.header)').toArray().map(li => {
+            let filename = $(li).data('filename') || $(li).find('.name').text();
+            // 拡張子オプションが「無し」の場合は.mp3または.wavのみ除去
+            if (extOption === 'none' && typeof filename === 'string') {
                 filename = filename.replace(/(\.mp3|\.wav)$/i, '');
             }
-            return { ...item, filename };
+            return {
+                filename: filename,
+                tlBegin: $(li).find('.ts').text()
+            };
         });
-        // SE除去機能: 指定秒数以下のトラックを除去（ボタンでのみ動作）
-        if (seRemoveSecound > 0) {
-            baseList = baseList.filter(item => {
-                // duration（100ナノ秒単位）を秒に変換して判定
-                let durationSec = 9999;
-                if (typeof item.duration === 'number' && !isNaN(item.duration)) {
-                    durationSec = item.duration / 1e7;
-                }
-                return durationSec > seRemoveSecound;
-            });
-        }
-        let grouped = getRepeatGrouped(baseList, repeatNotation);
-        let visibleIdx = 0;
-        grouped.forEach((item) => {
-            if (item.isVisible !== false) {
-                $ul.append(renderListItem(item, visibleIdx, numberingMode, repeatNotation));
-                visibleIdx++;
-            }
+        $ul.empty();
+        const numberingMode = getNumberingMode();
+        $ul.append(getHeaderHtml(numberingMode));
+        items.forEach((item, idx) => {
+            $ul.append(renderListItem(item, idx, numberingMode));
         });
-    }
+    });
 
     // ヘッダー行のHTMLを返す関数
     function getHeaderHtml(numberingMode) {
@@ -272,14 +206,9 @@ $(function() {
             if (typeof obj.filename === 'string' &&
                 (obj.filename.toLowerCase().endsWith('.mp3') || obj.filename.toLowerCase().endsWith('.wav'))
             ) {
-                let duration = null;
-                if ('tlEnd' in obj && typeof obj.tlEnd !== 'undefined') {
-                    duration = Number(obj.tlEnd) - Number(obj.tlBegin);
-                }
                 result.push({
                     filename: obj.filename,
-                    tlBegin: obj.tlBegin,
-                    duration: duration
+                    tlBegin: obj.tlBegin
                 });
             }
         }
