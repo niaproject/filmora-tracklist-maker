@@ -216,7 +216,8 @@ $(function() {
     // 現在のタイムフォーマットを取得
     function getTimeFormat() {
         const checked = document.querySelector('input[name="timeFormat"]:checked');
-        return checked ? checked.value : 'm:ss';
+        // デフォルトは h:m:ss
+        return checked ? checked.value : 'h:m:ss';
     }
 
     // 連番ラジオボタン変更時にリスト再描画
@@ -294,21 +295,23 @@ $(function() {
         return path.split(/[/\\]/).pop();
     }
 
-    // ナノ秒をhh:mm:ss形式に変換
+    // ナノ秒を時間フォーマットに変換
     function formatNanoToTime(nano) {
         const ns100 = Number(nano);
         if (isNaN(ns100)) return nano;
         // 100ナノ秒単位なので1e7で割って秒に変換
         let totalSeconds = Math.floor(ns100 / 1e7);
         const format = getTimeFormat();
-        if (format === 'm:ss') {
-            const minutes = Math.floor(totalSeconds / 60);
-            const seconds = totalSeconds % 60;
-            return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        } else { // 'hh:mm:ss'
-            const hours = Math.floor(totalSeconds / 3600);
-            const minutes = Math.floor((totalSeconds % 3600) / 60);
-            const seconds = totalSeconds % 60;
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        if (format === '[h:]m:ss') {
+            // h:m:ss -> hours omitted when zero; minutes and seconds 2桁
+            if (hours === 0) {
+                return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+            return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        } else { // 'hh:mm:ss' (既存)
             return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         }
     }
