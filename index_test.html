@@ -60,15 +60,24 @@
             <label><input type="radio" name="timeFormat" value="hh:mm:ss" checked> hh:mm:ss</label>
         </span>
     </div>
-    <div class="row">
-        <button id="copyTs">トラックリストをコピー</button>
+    <div class="row align-items-center">
+        <div class="col-auto">
+            <button id="copyTs" class="btn btn-primary">トラックリストをコピー</button>
+        </div>
+        <div class="col-auto">
+            <label for="copyHeaderSelect" class="visually-hidden">ヘッダー付与：</label>
+            <select id="copyHeaderSelect" class="form-select">
+                <option value="none">ヘッダーなし</option>
+                <option value="fixed:Tracklist">Tracklist</option>
+            </select>
+        </div>
     </div>
     <ul id="fileList"></ul>
     
     <footer>
         filmora-tracklist-maker &copy; 2025 にあぷろじぇくと (niaproject)
         <img src="images/icon_128.png" alt="icon" width="32" height="32" style="vertical-align:middle;"><br />
-        ver.20251012_221504 beta
+        ver.20251012_222926 beta
     </footer>
 </body>
 </html>

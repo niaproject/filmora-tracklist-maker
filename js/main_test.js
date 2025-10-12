@@ -84,7 +84,17 @@ $(function() {
                 }
             });
         }
-        navigator.clipboard.writeText(lines.join('\n')).then(() => {
+        // 題名のプレフィックスが選択されていれば先頭に追加
+    const titleOption = $('#copyHeaderSelect').val();
+        let outText = lines.join('\n');
+        if (titleOption && titleOption !== 'none') {
+            let title = '';
+            if (titleOption.startsWith('fixed:')) {
+                title = titleOption.replace('fixed:', '');
+            }
+            if (title) outText = `${title}\n${outText}`;
+        }
+        navigator.clipboard.writeText(outText).then(() => {
             alert('タイムスタンプをコピーしました');
         });
     });
