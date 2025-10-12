@@ -36,34 +36,19 @@ $(function() {
     $(document).on('click', '#copyTs', function() {
         const numberingMode = getNumberingMode();
         const lines = [];
-        if (window._lastTrackListData && window._lastTrackListData.length > 0) {
-            // 元データ（フィルタや拡張子表示の影響を受けるが、タイムフォーマットは常に最新）
-            // SE除去が適用されている場合は、renderTrackListが作るリストと差異が出る可能性があります。
-            // ここでは、現在表示されているリストに合わせるために、DOMがある場合はDOMを優先する。
-            const $lis = $('#fileList li:not(.header)');
-            if ($lis.length > 0) {
-                $lis.each(function(idx) {
-                    const name = $(this).find('.name').text();
-                    // DOMのtsはレンダリング時のフォーマットなので、再フォーマットが必要な場合は元データを参照
-                    const originalFilename = $(this).data('filename');
-                    // Try to find corresponding item in last data by filename or tlBegin
-                    let item = null;
-                    // First try matching by filename stored in data (which may be sans extension)
-                    if (originalFilename) {
-                        item = window._lastTrackListData.find(it => (it.originalFilename || it.filename).split(/[/\\]/).pop() === originalFilename || it.filename === originalFilename);
-                    }
-                    // Fallback: match by index
-                    if (!item) item = window._lastTrackListData[idx];
-                    const ts = item ? formatNanoToTime(item.tlBegin) : $(this).find('.ts').text();
-                    if (numberingMode === 'head') {
-                        lines.push(`${idx + 1} ${ts} ${name}`);
-                    } else if (numberingMode === 'beforeName') {
-                        lines.push(`${ts} ${idx + 1} ${name}`);
-                    } else {
-                        lines.push(`${ts} ${name}`);
-                    }
-                });
-            }
+        // 可能であれば、レンダリング済みのリスト（tlBeginを調整済み）を優先して使う
+        if (window._lastRenderedList && window._lastRenderedList.length > 0) {
+            window._lastRenderedList.forEach((item, idx) => {
+                const name = (item.filename || '').split(/[/\\]/).pop();
+                const ts = formatNanoToTime(item.tlBegin);
+                if (numberingMode === 'head') {
+                    lines.push(`${idx + 1} ${ts} ${name}`);
+                } else if (numberingMode === 'beforeName') {
+                    lines.push(`${ts} ${idx + 1} ${name}`);
+                } else {
+                    lines.push(`${ts} ${name}`);
+                }
+            });
         }
         // If lines still empty, fallback to DOM-only approach
         if (lines.length === 0) {
@@ -256,6 +241,7 @@ $(function() {
         const seRemoveSecound = Number($('#seRemoveSecound').val()) || 0;
         $ul.empty();
         $ul.append(getHeaderHtml(numberingMode));
+        // 最初にファイル名を整形
         let baseList = trackListData.map(item => {
             let filename = (item.originalFilename || item.filename).split(/[/\\]/).pop();
             if (extOption === 'none') {
@@ -263,18 +249,23 @@ $(function() {
             }
             return { ...item, filename };
         });
-        // SE除去機能: 指定秒数以下のトラックを除去（ボタンでのみ動作）
+        // SE除去機能: 指定秒数以下のトラックを除去（tlBeginは元のまま維持）
+        let renderedList = baseList;
         if (seRemoveSecound > 0) {
-            baseList = baseList.filter(item => {
-                // duration（100ナノ秒単位）を秒に変換して判定
-                let durationSec = 9999;
+            renderedList = baseList.filter(item => {
+                let durationSec = null;
                 if (typeof item.duration === 'number' && !isNaN(item.duration)) {
                     durationSec = item.duration / 1e7;
                 }
-                return durationSec > seRemoveSecound;
+                // durationが数値でかつ閾値以下なら除去
+                if (durationSec !== null && durationSec <= seRemoveSecound) {
+                    return false;
+                }
+                return true;
             });
         }
-        let grouped = getRepeatGrouped(baseList, repeatNotation);
+        // グルーピングはレンダリング用のリストで行う
+        let grouped = getRepeatGrouped(renderedList, repeatNotation);
         let visibleIdx = 0;
         grouped.forEach((item) => {
             if (item.isVisible !== false) {
@@ -282,6 +273,8 @@ $(function() {
                 visibleIdx++;
             }
         });
+        // 最後に、現在表示しているリストをグローバルに保持（コピー時などに使用）
+        window._lastRenderedList = renderedList;
     }
 
     // ヘッダー行のHTMLを返す関数
