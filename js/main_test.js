@@ -24,34 +24,66 @@ $(function() {
         }
     });
 
-    // 初期状態でオプションを非表示
-    $('.numbering-row, .ext-row, .repeat-row, .se-remove-row').hide();
+    // 初期状態でオプションを非表示（タイムフォーマット行も含める）
+    $('.numbering-row, .ext-row, .repeat-row, .se-remove-row, .time-format-row').hide();
     // オプション表示/非表示切り替え（アニメーション）
     $('#toggleOptions').on('click', function() {
-        $('.numbering-row, .ext-row, .repeat-row, .se-remove-row').each(function() {
+        $('.numbering-row, .ext-row, .repeat-row, .se-remove-row, .time-format-row').each(function() {
             $(this).slideToggle(300);
         });
     });
-    // タイムスタンプコピー機能
+    // タイムスタンプコピー機能（現在のタイムフォーマットを反映するため、可能なら元データから生成）
     $(document).on('click', '#copyTs', function() {
-        const $lis = $('#fileList li:not(.header)');
-        if ($lis.length === 0) {
-            alert('コピーするタイムスタンプがありません');
-            return;
-        }
         const numberingMode = getNumberingMode();
         const lines = [];
-        $lis.each(function(idx) {
-            const ts = $(this).find('.ts').text();
-            const name = $(this).find('.name').text();
-            if (numberingMode === 'head') {
-                lines.push(`${idx + 1} ${ts} ${name}`);
-            } else if (numberingMode === 'beforeName') {
-                lines.push(`${ts} ${idx + 1} ${name}`);
-            } else {
-                lines.push(`${ts} ${name}`);
+        if (window._lastTrackListData && window._lastTrackListData.length > 0) {
+            // 元データ（フィルタや拡張子表示の影響を受けるが、タイムフォーマットは常に最新）
+            // SE除去が適用されている場合は、renderTrackListが作るリストと差異が出る可能性があります。
+            // ここでは、現在表示されているリストに合わせるために、DOMがある場合はDOMを優先する。
+            const $lis = $('#fileList li:not(.header)');
+            if ($lis.length > 0) {
+                $lis.each(function(idx) {
+                    const name = $(this).find('.name').text();
+                    // DOMのtsはレンダリング時のフォーマットなので、再フォーマットが必要な場合は元データを参照
+                    const originalFilename = $(this).data('filename');
+                    // Try to find corresponding item in last data by filename or tlBegin
+                    let item = null;
+                    // First try matching by filename stored in data (which may be sans extension)
+                    if (originalFilename) {
+                        item = window._lastTrackListData.find(it => (it.originalFilename || it.filename).split(/[/\\]/).pop() === originalFilename || it.filename === originalFilename);
+                    }
+                    // Fallback: match by index
+                    if (!item) item = window._lastTrackListData[idx];
+                    const ts = item ? formatNanoToTime(item.tlBegin) : $(this).find('.ts').text();
+                    if (numberingMode === 'head') {
+                        lines.push(`${idx + 1} ${ts} ${name}`);
+                    } else if (numberingMode === 'beforeName') {
+                        lines.push(`${ts} ${idx + 1} ${name}`);
+                    } else {
+                        lines.push(`${ts} ${name}`);
+                    }
+                });
             }
-        });
+        }
+        // If lines still empty, fallback to DOM-only approach
+        if (lines.length === 0) {
+            const $lis = $('#fileList li:not(.header)');
+            if ($lis.length === 0) {
+                alert('コピーするタイムスタンプがありません');
+                return;
+            }
+            $lis.each(function(idx) {
+                const ts = $(this).find('.ts').text();
+                const name = $(this).find('.name').text();
+                if (numberingMode === 'head') {
+                    lines.push(`${idx + 1} ${ts} ${name}`);
+                } else if (numberingMode === 'beforeName') {
+                    lines.push(`${ts} ${idx + 1} ${name}`);
+                } else {
+                    lines.push(`${ts} ${name}`);
+                }
+            });
+        }
         navigator.clipboard.writeText(lines.join('\n')).then(() => {
             alert('タイムスタンプをコピーしました');
         });
@@ -186,8 +218,21 @@ $(function() {
         return checked ? checked.value : 'none';
     }
 
+    // 現在のタイムフォーマットを取得
+    function getTimeFormat() {
+        const checked = document.querySelector('input[name="timeFormat"]:checked');
+        return checked ? checked.value : 'm:ss';
+    }
+
     // 連番ラジオボタン変更時にリスト再描画
     $(document).on('change', 'input[name="numbering"]', function() {
+        const $ul = $('#fileList');
+        if (window._lastTrackListData) {
+            renderTrackList($ul, window._lastTrackListData);
+        }
+    });
+    // タイムフォーマット変更時にリスト再描画
+    $(document).on('change', 'input[name="timeFormat"]', function() {
         const $ul = $('#fileList');
         if (window._lastTrackListData) {
             renderTrackList($ul, window._lastTrackListData);
@@ -252,10 +297,17 @@ $(function() {
         if (isNaN(ns100)) return nano;
         // 100ナノ秒単位なので1e7で割って秒に変換
         let totalSeconds = Math.floor(ns100 / 1e7);
-        const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = totalSeconds % 60;
-        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        const format = getTimeFormat();
+        if (format === 'm:ss') {
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        } else { // 'hh:mm:ss'
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
     }
 
     // tlBeginが小さい順にソートする関数
