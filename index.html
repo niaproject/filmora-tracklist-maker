@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="js/main.min.js"></script>
+    <script src="js/main_test.js"></script>
     <title>Filmora TRACKLIST MAKER</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -52,15 +52,36 @@
             <button id="seRemoveUpdateBtn" type="button" style="margin-left:10px;">リスト更新</button>
         </span>
     </div>
-    <div class="row">
-        <button id="copyTs">トラックリストをコピー</button>
+    <div class="row time-format-row">
+        <span class="group" role="group" aria-label="タイムフォーマット機能">
+            <strong>タイムフォーマット</strong>
+                    <label><input type="radio" name="timeFormat" value="[h:]m:ss" > [h:]m:ss</label>
+                    <label><input type="radio" name="timeFormat" value="hh:mm:ss" checked> hh:mm:ss</label>
+        </span>
+    </div>
+    <div class="row align-items-center">
+        <div class="col-auto">
+            <button id="copyTs" class="btn btn-primary">トラックリストをコピー</button>
+        </div>
+        <div class="col-auto">
+            <label for="copyHeaderSelect" class="visually-hidden">ヘッダー付与：</label>
+            <select id="copyHeaderSelect" class="form-select">
+                <option value="none">ヘッダーなし</option>
+                <option value="fixed:Tracklist">Tracklist</option>
+                <option value="fixed:💿️Tracklist">💿️Tracklist</option>
+                <option value="fixed:💿️トラックリスト">💿️トラックリスト</option>
+                <option value="fixed:📖TrackList">📖TrackList</option>
+                <option value="fixed:📘TrackList">📘TrackList</option>
+                <option value="fixed:📚TrackList">📚TrackList</option>
+            </select>
+        </div>
     </div>
     <ul id="fileList"></ul>
     
     <footer>
         filmora-tracklist-maker &copy; 2025 にあぷろじぇくと (niaproject)
         <img src="images/icon_128.png" alt="icon" width="32" height="32" style="vertical-align:middle;"><br />
-        ver.20251001_202239
+        ver.20251012_222926
     </footer>
 </body>
 </html>

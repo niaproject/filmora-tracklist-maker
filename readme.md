@@ -55,8 +55,8 @@ $ npx javascript-obfuscator js/main.js --output js/main.obf.js
 
 ## HISTORY
 
-- ver.20251012_221504 beta
+- ver.20251012_221504
   - 拡張子としてm4aに対応
   - タイムフォーマット機能追加（hh:mm:ss / m:ss）
-- ver.20251012_222926 beta
+- ver.20251012_222926
   - トラックリストのヘッダー付与機能の追加

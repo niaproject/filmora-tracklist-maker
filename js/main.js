@@ -24,35 +24,65 @@ $(function() {
         }
     });
 
-    // 初期状態でオプションを非表示
-    $('.numbering-row, .ext-row, .repeat-row, .se-remove-row').hide();
+    // 初期状態でオプションを非表示（タイムフォーマット行も含める）
+    $('.numbering-row, .ext-row, .repeat-row, .se-remove-row, .time-format-row').hide();
     // オプション表示/非表示切り替え（アニメーション）
     $('#toggleOptions').on('click', function() {
-        $('.numbering-row, .ext-row, .repeat-row, .se-remove-row').each(function() {
+        $('.numbering-row, .ext-row, .repeat-row, .se-remove-row, .time-format-row').each(function() {
             $(this).slideToggle(300);
         });
     });
-    // タイムスタンプコピー機能
+    // タイムスタンプコピー機能（現在のタイムフォーマットを反映するため、可能なら元データから生成）
     $(document).on('click', '#copyTs', function() {
-        const $lis = $('#fileList li:not(.header)');
-        if ($lis.length === 0) {
-            alert('コピーするタイムスタンプがありません');
-            return;
-        }
         const numberingMode = getNumberingMode();
         const lines = [];
-        $lis.each(function(idx) {
-            const ts = $(this).find('.ts').text();
-            const name = $(this).find('.name').text();
-            if (numberingMode === 'head') {
-                lines.push(`${idx + 1} ${ts} ${name}`);
-            } else if (numberingMode === 'beforeName') {
-                lines.push(`${ts} ${idx + 1} ${name}`);
-            } else {
-                lines.push(`${ts} ${name}`);
+        // 可能であれば、レンダリング済みのリスト（displayList）を優先して使う
+        if (window._lastRenderedList && window._lastRenderedList.length > 0) {
+            window._lastRenderedList.forEach((item, idx) => {
+                // displayName を優先して使用（Repeat 表記等を反映）
+                const name = (item.displayName && String(item.displayName))
+                    ? item.displayName
+                    : ((item.filename || '').split(/[/\\]/).pop());
+                const ts = formatNanoToTime(item.tlBegin);
+                if (numberingMode === 'head') {
+                    lines.push(`${idx + 1} ${ts} ${name}`);
+                } else if (numberingMode === 'beforeName') {
+                    lines.push(`${ts} ${idx + 1} ${name}`);
+                } else {
+                    lines.push(`${ts} ${name}`);
+                }
+            });
+        }
+        // If lines still empty, fallback to DOM-only approach
+        if (lines.length === 0) {
+            const $lis = $('#fileList li:not(.header)');
+            if ($lis.length === 0) {
+                alert('コピーするタイムスタンプがありません');
+                return;
             }
-        });
-        navigator.clipboard.writeText(lines.join('\n')).then(() => {
+            $lis.each(function(idx) {
+                const ts = $(this).find('.ts').text();
+                const name = $(this).find('.name').text();
+                if (numberingMode === 'head') {
+                    lines.push(`${idx + 1} ${ts} ${name}`);
+                } else if (numberingMode === 'beforeName') {
+                    lines.push(`${ts} ${idx + 1} ${name}`);
+                } else {
+                    lines.push(`${ts} ${name}`);
+                }
+            });
+        }
+        // 題名のプレフィックスが選択されていれば先頭に追加
+    const titleOption = $('#copyHeaderSelect').val();
+        let outText = lines.join('\n');
+        if (titleOption && titleOption !== 'none') {
+            let title = '';
+            if (titleOption.startsWith('fixed:')) {
+                title = titleOption.replace('fixed:', '');
+            }
+            if (title) outText = `${title}\n${outText}`;
+        }
+        navigator.clipboard.writeText(outText).then(() => {
             alert('タイムスタンプをコピーしました');
         });
     });
@@ -112,7 +142,7 @@ $(function() {
                 const extOption = $('input[name="extOption"]:checked').val();
                 found.forEach(item => {
                     if (extOption === 'none') {
-                        item.filename = item.filename.replace(/(\.mp3|\.wav)$/i, '');
+                        item.filename = item.filename.replace(/(\.mp3|\.wav|\.m4a)$/i, '');
                     }
                 });
                 // 元データをグローバルに保存
@@ -186,8 +216,22 @@ $(function() {
         return checked ? checked.value : 'none';
     }
 
+    // 現在のタイムフォーマットを取得
+    function getTimeFormat() {
+        const checked = document.querySelector('input[name="timeFormat"]:checked');
+        // デフォルトは h:m:ss
+        return checked ? checked.value : 'h:m:ss';
+    }
+
     // 連番ラジオボタン変更時にリスト再描画
     $(document).on('change', 'input[name="numbering"]', function() {
+        const $ul = $('#fileList');
+        if (window._lastTrackListData) {
+            renderTrackList($ul, window._lastTrackListData);
+        }
+    });
+    // タイムフォーマット変更時にリスト再描画
+    $(document).on('change', 'input[name="timeFormat"]', function() {
         const $ul = $('#fileList');
         if (window._lastTrackListData) {
             renderTrackList($ul, window._lastTrackListData);
@@ -201,32 +245,53 @@ $(function() {
         const seRemoveSecound = Number($('#seRemoveSecound').val()) || 0;
         $ul.empty();
         $ul.append(getHeaderHtml(numberingMode));
+        // 最初にファイル名を整形
         let baseList = trackListData.map(item => {
             let filename = (item.originalFilename || item.filename).split(/[/\\]/).pop();
             if (extOption === 'none') {
-                filename = filename.replace(/(\.mp3|\.wav)$/i, '');
+                filename = filename.replace(/(\.mp3|\.wav|\.m4a)$/i, '');
             }
             return { ...item, filename };
         });
-        // SE除去機能: 指定秒数以下のトラックを除去（ボタンでのみ動作）
+        // SE除去機能: 指定秒数以下のトラックを除去（tlBeginは元のまま維持）
+        let renderedList = baseList;
         if (seRemoveSecound > 0) {
-            baseList = baseList.filter(item => {
-                // duration（100ナノ秒単位）を秒に変換して判定
-                let durationSec = 9999;
+            renderedList = baseList.filter(item => {
+                let durationSec = null;
                 if (typeof item.duration === 'number' && !isNaN(item.duration)) {
                     durationSec = item.duration / 1e7;
                 }
-                return durationSec > seRemoveSecound;
+                // durationが数値でかつ閾値以下なら除去
+                if (durationSec !== null && durationSec <= seRemoveSecound) {
+                    return false;
+                }
+                return true;
             });
         }
-        let grouped = getRepeatGrouped(baseList, repeatNotation);
+        // グルーピングはレンダリング用のリストで行う
+        let grouped = getRepeatGrouped(renderedList, repeatNotation);
         let visibleIdx = 0;
+        // 表示に使った最終リスト（displayList）を作成してグローバルに保存
+        const displayList = [];
         grouped.forEach((item) => {
             if (item.isVisible !== false) {
+                // displayName はリピート表記を反映した値を保持する
+                const displayName = (repeatNotation === 'withRepeatNotation' && item.isRepeat)
+                    ? 'Repeat'
+                    : extractFileName(item.filename);
+                // DOM へ追加
                 $ul.append(renderListItem(item, visibleIdx, numberingMode, repeatNotation));
+                // displayList 用オブジェクトを保存（コピー時に利用）
+                displayList.push({
+                    filename: item.filename,
+                    tlBegin: item.tlBegin,
+                    displayName: displayName
+                });
                 visibleIdx++;
             }
         });
+        // 最後に、現在表示しているリストをグローバルに保持（コピー時などに使用）
+        window._lastRenderedList = displayList;
     }
 
     // ヘッダー行のHTMLを返す関数
@@ -246,16 +311,25 @@ $(function() {
         return path.split(/[/\\]/).pop();
     }
 
-    // ナノ秒をhh:mm:ss形式に変換
+    // ナノ秒を時間フォーマットに変換
     function formatNanoToTime(nano) {
         const ns100 = Number(nano);
         if (isNaN(ns100)) return nano;
         // 100ナノ秒単位なので1e7で割って秒に変換
         let totalSeconds = Math.floor(ns100 / 1e7);
+        const format = getTimeFormat();
         const hours = Math.floor(totalSeconds / 3600);
         const minutes = Math.floor((totalSeconds % 3600) / 60);
         const seconds = totalSeconds % 60;
-        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        if (format === '[h:]m:ss') {
+            // h:m:ss -> hours omitted when zero; minutes and seconds 2桁
+            if (hours === 0) {
+                return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+            return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        } else { // 'hh:mm:ss' (既存)
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
     }
 
     // tlBeginが小さい順にソートする関数
@@ -275,9 +349,11 @@ $(function() {
         const hasBegin = ('tlBegin' in obj);
 
         if (hasFilename && hasBegin) {
-            // filenameが.mp3または.wavで終わる場合のみ抽出
+            // filenameが.mp3, .wav, .m4aで終わる場合のみ抽出
             if (typeof obj.filename === 'string' &&
-                (obj.filename.toLowerCase().endsWith('.mp3') || obj.filename.toLowerCase().endsWith('.wav'))
+                (obj.filename.toLowerCase().endsWith('.mp3') ||
+                 obj.filename.toLowerCase().endsWith('.wav') ||
+                 obj.filename.toLowerCase().endsWith('.m4a'))
             ) {
                 let duration = null;
                 if ('tlEnd' in obj && typeof obj.tlEnd !== 'undefined') {
