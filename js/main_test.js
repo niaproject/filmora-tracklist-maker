@@ -36,10 +36,13 @@ $(function() {
     $(document).on('click', '#copyTs', function() {
         const numberingMode = getNumberingMode();
         const lines = [];
-        // 可能であれば、レンダリング済みのリスト（tlBeginを調整済み）を優先して使う
+        // 可能であれば、レンダリング済みのリスト（displayList）を優先して使う
         if (window._lastRenderedList && window._lastRenderedList.length > 0) {
             window._lastRenderedList.forEach((item, idx) => {
-                const name = (item.filename || '').split(/[/\\]/).pop();
+                // displayName を優先して使用（Repeat 表記等を反映）
+                const name = (item.displayName && String(item.displayName))
+                    ? item.displayName
+                    : ((item.filename || '').split(/[/\\]/).pop());
                 const ts = formatNanoToTime(item.tlBegin);
                 if (numberingMode === 'head') {
                     lines.push(`${idx + 1} ${ts} ${name}`);
@@ -268,14 +271,27 @@ $(function() {
         // グルーピングはレンダリング用のリストで行う
         let grouped = getRepeatGrouped(renderedList, repeatNotation);
         let visibleIdx = 0;
+        // 表示に使った最終リスト（displayList）を作成してグローバルに保存
+        const displayList = [];
         grouped.forEach((item) => {
             if (item.isVisible !== false) {
+                // displayName はリピート表記を反映した値を保持する
+                const displayName = (repeatNotation === 'withRepeatNotation' && item.isRepeat)
+                    ? 'Repeat'
+                    : extractFileName(item.filename);
+                // DOM へ追加
                 $ul.append(renderListItem(item, visibleIdx, numberingMode, repeatNotation));
+                // displayList 用オブジェクトを保存（コピー時に利用）
+                displayList.push({
+                    filename: item.filename,
+                    tlBegin: item.tlBegin,
+                    displayName: displayName
+                });
                 visibleIdx++;
             }
         });
         // 最後に、現在表示しているリストをグローバルに保持（コピー時などに使用）
-        window._lastRenderedList = renderedList;
+        window._lastRenderedList = displayList;
     }
 
     // ヘッダー行のHTMLを返す関数
