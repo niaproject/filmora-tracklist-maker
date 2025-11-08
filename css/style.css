@@ -45,3 +45,33 @@ li.summary { cursor: default; background: #f8fafc; border-style: dashed; }
 footer {
     margin-top: 2em; text-align: center; color: #888; font-size: 0.95em;
 }
+
+.drop-zone{
+  border: 2px dashed #9aa0a6;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  background: #fafafa;
+  cursor: pointer;
+  transition: border-color .15s ease, background-color .15s ease, box-shadow .15s ease;
+}
+.drop-zone:hover,
+.drop-zone:focus{
+  border-color: #5f6368;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(100,150,250,.25);
+}
+.drop-zone.dragover{
+  background: #eef5ff;
+  border-color: #1a73e8;
+}
+.drop-zone__text{ margin: 0; color:#444; }
+.drop-zone strong{ color:#1a73e8; }
+
+/* 画面読み上げ用ユーティリティ（既にあれば不要） */
+.sr-only{
+  position:absolute !important;
+  width:1px; height:1px;
+  padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0,0,0,0); border:0;
+}

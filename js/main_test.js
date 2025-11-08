@@ -98,6 +98,54 @@ $(function() {
     const $fileInput = $('#fileInput');
     if ($fileInput.length === 0) return;
 
+    // ドロップゾーンのクリックでファイル選択ダイアログを開く
+    const $dropZone = $('#dropZone');
+    if ($dropZone.length) {
+        $dropZone.on('click', function() {
+            // jQuery.trigger('click') may not open file dialog in some browsers when input is hidden.
+            // Use the DOM click() on the input element when available.
+            try {
+                if ($fileInput && $fileInput[0] && typeof $fileInput[0].click === 'function') {
+                    $fileInput[0].click();
+                    return;
+                }
+            } catch (e) {
+                // fallthrough to jQuery trigger as fallback
+            }
+            $fileInput.trigger('click');
+        });
+        // キーボード操作 (Enter, Space)
+        $dropZone.on('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                $fileInput.trigger('click');
+            }
+        });
+        // drag over / enter
+        $dropZone.on('dragover', function(e) {
+            e.preventDefault();
+            e.originalEvent.dataTransfer.dropEffect = 'copy';
+            $dropZone.addClass('dragover');
+        });
+        $dropZone.on('dragleave dragend', function(e) {
+            e.preventDefault();
+            $dropZone.removeClass('dragover');
+        });
+        // drop
+        $dropZone.on('drop', function(e) {
+            e.preventDefault();
+            $dropZone.removeClass('dragover');
+            const dt = e.originalEvent.dataTransfer;
+            if (dt && dt.files && dt.files.length > 0) {
+                const file = dt.files[0];
+                if (!file.name || !file.name.endsWith('.wfp')) {
+                    alert('WFPファイルを選択してください');
+                    return;
+                }
+                readZipFile(file);
+            }
+        });
+    }
 
     $fileInput.on('change', function(event) {
         const file = event.target.files[0];
