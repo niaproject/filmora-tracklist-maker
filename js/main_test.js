@@ -142,6 +142,9 @@ $(function() {
                     alert('WFPファイルを選択してください');
                     return;
                 }
+                // 選択ファイル名を表示
+                const $sel = $('#selectedFileName');
+                if ($sel.length) $sel.text(file.name);
                 readZipFile(file);
             }
         });
@@ -149,11 +152,18 @@ $(function() {
 
     $fileInput.on('change', function(event) {
         const file = event.target.files[0];
-        if (!file) return;
-        if (!file.name.endsWith('.wfp')) {
-            alert('WFPファイルを選択してください');
+        const $sel = $('#selectedFileName');
+        if (!file) {
+            if ($sel.length) $sel.text('');
             return;
         }
+        if (!file.name.endsWith('.wfp')) {
+            alert('WFPファイルを選択してください');
+            if ($sel.length) $sel.text('');
+            return;
+        }
+        // 選択ファイル名を表示
+        if ($sel.length) $sel.text(file.name);
         readZipFile(file);
     });
 
