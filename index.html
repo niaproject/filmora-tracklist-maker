@@ -17,8 +17,20 @@
     <div class="row">
         <span class="group-files" role="group" aria-label="ファイルを選択">
             <strong>ファイルを選択(.wfp):</strong>
-            <input type="file" id="fileInput" name="fileInput" accept=".wfp">
+            <span id="selectedFileName" aria-live="polite" style="margin-left:8px;color:#333;"></span>
         </span>
+    </div>
+    <div class="row">
+        <div id="dropZone" class="drop-zone" role="button" tabindex="0" aria-label=".wfpをここにドラッグ＆ドロップ（クリックでも選択可）">
+            <p class="drop-zone__text">
+                ここに <strong>.wfp</strong> をドラッグ＆ドロップ<br>
+                <small>またはクリックして選択</small>
+            </p>
+            <!-- 非表示の input をドロップゾーン内に置き、既存の js ロジック（#fileInput を参照）を再利用 -->
+            <!--<input type="file" id="fileInput" name="fileInput" accept=".wfp" style="display:none" aria-hidden="true">-->
+            <input type="file" id="fileInput" name="fileInput" accept=".wfp" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
+        </div>
+    <div id="dropFeedback" class="sr-only" aria-live="polite"></div>
     </div>
     <div class="row">
         <button id="toggleOptions" type="button">オプションの表示/非表示</button>
@@ -81,7 +93,7 @@
     <footer>
         filmora-tracklist-maker &copy; 2025 にあぷろじぇくと (niaproject)
         <img src="images/icon_128.png" alt="icon" width="32" height="32" style="vertical-align:middle;"><br />
-        ver.20251101_102129
+        ver.20251109_080749
     </footer>
 </body>
 </html>
